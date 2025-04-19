@@ -1,0 +1,8 @@
+# Cargo target directory
+target/
+
+# rustfmt backups
+**/*.rs.bk
+
+# log files
+*.log
