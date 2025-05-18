@@ -5,4 +5,6 @@ edition = "2024"
 description = "a tagging system"
 
 [dependencies]
-clap = { version = "4.5.37", features = ["cargo"] }
+axum = "0.8.1"
+clap = { version = "4.5.38", features = ["cargo"] }
+tokio = { version = "1.45.0", features = ["full"] }
