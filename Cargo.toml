@@ -7,4 +7,5 @@ description = "a tagging system"
 [dependencies]
 axum = "0.8.1"
 clap = { version = "4.5.38", features = ["cargo"] }
+sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite"] }
 tokio = { version = "1.45.0", features = ["full"] }
