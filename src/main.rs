@@ -1,5 +1,5 @@
 use sqlx::migrate::MigrateDatabase;
-use std::path::PathBuf;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 const DATABASE_FILENAME: &str = "pearlden.db";
 
@@ -10,7 +10,7 @@ async fn main() {
         .arg(
             clap::Arg::new("den")
                 .required(true)
-                .value_parser(clap::value_parser!(PathBuf))
+                .value_parser(clap::value_parser!(std::path::PathBuf))
                 .help("Path to directory of den")
         )
         .arg(
@@ -21,34 +21,47 @@ async fn main() {
                 .help("Create database file if absent")
         )
         .get_matches();
-    let den_path = matches.get_one::<PathBuf>("den").expect("<den> should be required");
-    // attach to den
-    println!("verifying \"{}\" is a directory...", den_path.display());
+    let den_path = matches.get_one::<std::path::PathBuf>("den").expect("<den> should be required");
+    // trace
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_new(format!(
+                "{}=debug,tower_http=debug,axum::rejection=trace",
+                env!("CARGO_CRATE_NAME")
+            )).expect("filter directives should be valid")
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+    // verify <den> is a directory
     if !den_path.is_dir() {
-        eprintln!("error: \"{}\" is not a directory!", den_path.display());
+        tracing::error!("`{}` is not a directory!", den_path.display());
         std::process::exit(1);
     }
+    tracing::info!("verified `{}` is a directory", den_path.display());
+    // guarantee <den> contains database file
     let db_path = den_path.join(DATABASE_FILENAME);
     let db_url = format!("sqlite://{}", db_path.display());
-    println!("verifying \"{}\" exists...", db_path.display());
     if !sqlx::Sqlite::database_exists(&db_url).await.unwrap_or(false) {
         if !matches.get_flag("create") {
-            eprintln!("error: \"{}\" does not exist!", db_path.display());
+            tracing::error!("`{}` not found!", db_path.display());
             std::process::exit(1);
         }
-        println!("creating \"{}\"...", db_path.display());
         if let Err(error) = sqlx::Sqlite::create_database(&db_url).await {
-            eprintln!("error: could not create \"{}\" ({})!", db_path.display(), error);
+            tracing::error!("could not create `{}` ({})!", db_path.display(), error);
             std::process::exit(1);
         }
+        tracing::info!("created `{}`", db_path.display());
+    } else {
+        tracing::info!("verified `{}` exists", db_path.display());
     }
     // start server
-    println!("starting server...");
-    let app = axum::Router::new().route("/", axum::routing::get(handler));
+    tracing::info!("starting server");
+    let app = axum::Router::new()
+        .route("/", axum::routing::get(handler));
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
         .unwrap();
-    println!("listening on: {}", listener.local_addr().unwrap());
+    tracing::info!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
 }
 

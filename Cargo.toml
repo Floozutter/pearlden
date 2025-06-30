@@ -5,7 +5,9 @@ edition = "2024"
 description = "a tagging system"
 
 [dependencies]
-axum = "0.8.1"
-clap = { version = "4.5.38", features = ["cargo"] }
+axum = "0.8.4"
+clap = { version = "4.5.40", features = ["cargo"] }
 sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite"] }
-tokio = { version = "1.45.0", features = ["full"] }
+tokio = { version = "1.45.1", features = ["full"] }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
