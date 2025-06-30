@@ -4,5 +4,5 @@ target/
 # rustfmt backups
 **/*.rs.bk
 
-# log files
-*.log
+# database files
+*.db
