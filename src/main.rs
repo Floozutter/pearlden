@@ -57,7 +57,8 @@ async fn main() {
     // start server
     tracing::info!("starting server");
     let app = axum::Router::new()
-        .route("/", axum::routing::get(handler));
+        .route("/", axum::routing::get(handler))
+        .layer(tower_http::trace::TraceLayer::new_for_http());
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
         .unwrap();
