@@ -5,6 +5,7 @@ edition = "2024"
 description = "a tagging system"
 
 [dependencies]
+askama = "0.14.0"
 axum = { version = "0.8.4", features = ["tracing"] }
 clap = { version = "4.5.40", features = ["cargo"] }
 sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite"] }
