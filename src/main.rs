@@ -1,6 +1,8 @@
 use sqlx::migrate::MigrateDatabase;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+mod web;
+
 const DATABASE_FILENAME: &str = "pearlden.db";
 
 #[tokio::main]
@@ -56,39 +58,8 @@ async fn main() {
     }
     // start server
     tracing::info!("starting server");
-    let app = axum::Router::new()
-        .route("/", axum::routing::get(handler))
-        .layer(tower_http::trace::TraceLayer::new_for_http());
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
-        .await
-        .unwrap();
-    tracing::info!("listening on {}", listener.local_addr().unwrap());
-    axum::serve(listener, app).await.unwrap();
-}
-
-async fn handler() -> impl axum::response::IntoResponse {
-    HtmlTemplate(HelloTemplate { name: "world".to_string() })
-}
-
-#[derive(askama::Template)]
-#[template(path = "hello.html")]
-struct HelloTemplate {
-    name: String,
-}
-
-struct HtmlTemplate<T>(T);
-
-impl<T> axum::response::IntoResponse for HtmlTemplate<T>
-where
-    T: askama::Template,
-{
-    fn into_response(self) -> axum::response::Response {
-        match self.0.render() {
-            Ok(html) => axum::response::Html(html).into_response(),
-            Err(err) => (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("failed to render template: {}", err),
-            ).into_response(),
-        }
+    let app = crate::web::App {};
+    if let Err(err) = app.serve().await {
+        tracing::error!("server error: {}", err);
     }
 }
